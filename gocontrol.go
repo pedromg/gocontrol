@@ -46,7 +46,6 @@ func main() {
 	if  err != nil {
 		log.Fatal("Fatal error loading the JSON data,", err)
 	}
-	// fmt.Printf("Results: %+v\n", res)
 
 	// create go routines for each request
 
