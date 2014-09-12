@@ -26,10 +26,6 @@ func TestValidJSONFile( t *testing.T) {
 	}
 }
 
-func TestGetRequestInfo( t *testing.T) {
-	t.Log("are the arguments valid?")
-}
-
 func TestScriptExists( t *testing.T) {
 	t.Log("script exists ?")
 }
@@ -42,3 +38,6 @@ func TestValidReply( t *testing.T) {
 	t.Log("is the reply covered ?")
 }
 
+func TestSendEmail( t *testing.T) {
+	t.Log("email sent ?")
+}
