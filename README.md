@@ -46,16 +46,16 @@ The `delayedby` int is the number of times the execution of the script is delaye
 
 ### Configuration fields
 
--	__name__: github test # the name for this monitoring section.
--	__url__: domain.com/path/to/monitoring/controler # the address to monitor.
--	__secure__: true # http vs https.
--	__interval__: 60 # the interval between monitor requests.
--	__statuscode__: [401,501,502,503] # int array of the status codes to monitor and generate alert; name them all, not the family.
--	__maxalerts__: 2 # the max number os alerts to be sent; after that it becomes silent until the service is up again.
--	__script__: ./script_1.sh # the script to run via `sh`
--	__delayedby__: 2 # the number of detections before executing the script.
--	__email__: true # send an email ?
--	__emailaddress__: me@me.com # email to receive the alerts.
--	__log__: true # log ?
--	__logfile__: gocontrol_1.log # file to append the log.
+-	__name__: (string) the name for this monitoring section.
+-	__url__: (string) the address to monitor.
+-	__secure__: (bool) http vs https.
+-	__interval__: (int) the interval in seconds between monitor requests.
+-	__statuscode__: ([]int) int array of the status codes to monitor and generate alert; name them all, not the family.
+-	__maxalerts__: (int) the max number os alerts to be sent; after that it becomes silent until the service is up again.
+-	__script__: (string) the script to run via `sh`
+-	__delayedby__: (int) the number of detections before executing the script.
+-	__email__: (bool) send an email ?
+-	__emailaddress__: (string) email to receive the alerts.
+-	__log__: (bool) log ?
+-	__logfile__: (string) # file to append the log.
 
