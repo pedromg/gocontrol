@@ -18,6 +18,11 @@ Format file: JSON structured:
 	"script": "./script_1.sh", 
 	"delayedby": 2,
 	"email": true, 
+	"smtphost": "mailtrap.io",
+	"smtpport":2525,
+	"smtpemail": "sender@me.com",
+	"smtpusername": "smtpusername123",
+	"smtppassword": "123456",
 	"emailaddress": "me@me.com", 
 	"log": true, 
 	"logfile": "gocontrol_1.log"},
@@ -30,7 +35,12 @@ Format file: JSON structured:
 	"maxalerts": 2,
 	"script": "./script_2.sh", 
 	"delayedby": 2,
-	"email": true, 
+	"email": true,
+	"smtphost": "mailtrap.io",
+	"smtpport":2525,
+	"smtpemail": "sender@me.com",
+	"smtpusername": "smtpusername123",
+	"smtppassword": "123456", 
 	"emailaddress": "me@me.com", 
 	"log": true, 
 	"logfile": "gocontrol_2.log"}
@@ -55,6 +65,11 @@ The `delayedby` int is the number of times the execution of the script is delaye
 -	__script__: (string) the script to run via `sh`
 -	__delayedby__: (int) the number of detections before executing the script.
 -	__email__: (bool) send an email ?
+-	__smtphost__: (string) the hostname of the email provider
+-	__smtpport__: (int) the port of the smtp host
+-	__smtpemail__: (string) the email of the sender (from header)
+-	__smtpusername__: (string) the username for the smtp auth
+-	__smtppassword__: (string) the password for the smtp auth
 -	__emailaddress__: (string) email to receive the alerts.
 -	__log__: (bool) log ?
 -	__logfile__: (string) # file to append the log.

@@ -102,7 +102,7 @@ func sendEmail(elem RequestInfo, r *http.Response, err error) (e error) {
 	msg += "\r\n"
 	msg += goEncoderBase64.Base64MimeEncoder(body)
 	go send_email(elem, elem.SmtpEmail, elem.EmailAddress, msg)
-
+	// always return nil
 	return e
 }
 
