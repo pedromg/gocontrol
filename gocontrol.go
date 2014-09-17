@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"io/ioutil"
 	"log"
 	"fmt"
@@ -24,7 +25,7 @@ type RequestInfo struct {
 	Email bool
 	EmailAddress string
 	Log bool
-	Logfile string
+	LogFile string
 }
 
 var reqinfo []RequestInfo
@@ -44,16 +45,28 @@ func GetRequestInfo(f string) (r []RequestInfo, err error) {
 	return r, err
 }
 
-func sendEmail(elem RequestInfo, err error) {
-	log.Print("EMAIL ALERT FOR ", elem.Name, " !! ", err )
+func sendEmail(elem RequestInfo, r *http.Response, err error) (e error) {
+	return e
 }
 
-func sendLog(elem RequestInfo, err error) {
-	log.Print("LOG ALERT FOR ", elem.Name, " !! ", err )
+func sendLog(elem RequestInfo, r *http.Response, err error) (e error) {
+	var theErr string
+	var theStatus string
+	f, e := os.OpenFile(elem.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	if e == nil {
+		defer f.Close()
+		if err != nil {
+			theErr = err.Error() 
+		}
+		if r != nil {
+			theStatus = r.Status
+		}
+		_, e = f.WriteString(time.Now().String() + " " + elem.Name + " - " + theStatus + " - " + theErr + "\n")
+	}
+	return e
 }
 
 func execScript(elem RequestInfo) (err error) {
-	log.Print("EXEC SCRIPT FOR ", elem.Name)
 	cmd := exec.Command("sh", elem.Script)
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -109,10 +122,13 @@ func startWorker(elem RequestInfo, wg *sync.WaitGroup) {
 		}
 		// alert triggers
 		if alert && elem.Email {
-			sendEmail(elem, err)
+			sendEmail(elem, r, err)
 		}
 		if alert && elem.Log {
-			sendLog(elem, err)
+			e := sendLog(elem, r, err)
+			if e != nil {
+				log.Print("ERROR Creating LogFile - ", e)
+			}
 		}
 
 		// reset the alert and sleep
