@@ -8,7 +8,12 @@
 	"script": "script_1.sh", 
 	"delayedby": 2,
 	"email": true, 
-	"emailaddress": "me@me.com", 
+	"smtphost": "mailtrap.io",
+	"smtpport":2525,
+	"smtpemail": "sender@me.com",
+	"smtpusername": "smtpusername123",
+	"smtppassword": "123456",
+	"emailaddress": "receiver@me.com", 
 	"log": true, 
 	"logfile": "./test/gocontrol_1.log"},
 	
@@ -21,7 +26,12 @@
 	"script": "./test/script_2.sh", 
 	"delayedby": 2,
 	"email": true, 
-	"emailaddress": "me@me.com", 
+	"smtphost": "mailtrap.io",
+	"smtpport":2525,
+	"smtpemail": "sender@me.com",
+	"smtpusername": "smtpusername123",
+	"smtppassword": "123456",
+	"emailaddress": "receiver@me.com", 
 	"log": true, 
 	"logfile": "./test/gocontrol_2.log"},
 
@@ -33,8 +43,6 @@
 	"maxalerts": 5,
 	"script": "./test/script_3.sh", 
 	"delayedby": 2,
-	"email": true, 
-	"emailaddress": "me@me.com", 
 	"log": true, 
 	"logfile": "./test/gocontrol_3.log"}
 ]

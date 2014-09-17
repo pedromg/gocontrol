@@ -9,8 +9,13 @@ import (
 	"time"
 	"bytes"
 	"os/exec"
+	"strconv"
+	"math/rand"
 	"encoding/json"
 	"net/http"
+	"net/mail"
+	"net/smtp"
+	"github.com/pedromg/goEncoderBase64"
 )
 
 type RequestInfo struct {
@@ -23,6 +28,11 @@ type RequestInfo struct {
 	Script string
 	DelayedBy int
 	Email bool
+	SmtpHost string
+	SmtpPort int
+	SmtpEmail string
+	SmtpUsername string
+	SmtpPassword string
 	EmailAddress string
 	Log bool
 	LogFile string
@@ -45,23 +55,62 @@ func GetRequestInfo(f string) (r []RequestInfo, err error) {
 	return r, err
 }
 
+func messageLine(elem RequestInfo, r *http.Response, err error) (m string) {
+	var theErr string
+	var theStatus string
+	if err != nil {
+		theErr = err.Error()
+	}
+	if r != nil {
+		theStatus = r.Status
+	}
+	m = time.Now().String() + " " + elem.Name + " - " + theStatus + " - " + theErr + "\n"
+	return m
+}
+
+func send_email(elem RequestInfo, from, to, msg string) {
+	f := mail.Address{from, from}
+	t := mail.Address{to, to}
+	// auth
+	auth := smtp.PlainAuth("", elem.SmtpUsername, elem.SmtpPassword, elem.SmtpHost)
+	err := smtp.SendMail(elem.SmtpHost+":"+strconv.Itoa(elem.SmtpPort), auth, f.Address, []string{t.Address}, []byte(msg))
+	if err != nil {
+		log.Print("SEND MAIL Error, ", err)
+	}
+}
+
 func sendEmail(elem RequestInfo, r *http.Response, err error) (e error) {
+	startTime := time.Now()
+        header := make(map[string]string)
+	header["From"] = elem.SmtpEmail
+	header["To"] = elem.EmailAddress
+	the_mesg_id := "<" + strconv.Itoa(rand.Intn(999999999)) + "__" +
+		startTime.Format("2006-01-02T15:04:05.999999999Z07:00") +
+		"==@"+elem.SmtpHost+">" 
+	header["Message-id"] = the_mesg_id
+	header["Date"] = startTime.Format("Mon, 02 Jan 2006 15:04:05 +0000")
+	header["Subject"] = "goControl Alert for " + elem.Name
+	header["MIME-Version"] = "1.0"
+	header["Content-Type"] = "text/plain; charset=\"utf-8\""
+	header["Content-Transfer-Encoding"] = "base64"
+	body := "++ goControl ALERT ++ \n\n "
+	body += messageLine(elem, r, err)
+	msg := ""
+	for k, v := range header {
+		msg += fmt.Sprintf("%s: %s\r\n", k, v)
+	}
+	msg += "\r\n"
+	msg += goEncoderBase64.Base64MimeEncoder(body)
+	go send_email(elem, elem.SmtpEmail, elem.EmailAddress, msg)
+
 	return e
 }
 
 func sendLog(elem RequestInfo, r *http.Response, err error) (e error) {
-	var theErr string
-	var theStatus string
 	f, e := os.OpenFile(elem.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if e == nil {
 		defer f.Close()
-		if err != nil {
-			theErr = err.Error() 
-		}
-		if r != nil {
-			theStatus = r.Status
-		}
-		_, e = f.WriteString(time.Now().String() + " " + elem.Name + " - " + theStatus + " - " + theErr + "\n")
+		_, e = f.WriteString(messageLine(elem, r, err))
 	}
 	return e
 }
