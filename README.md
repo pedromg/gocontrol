@@ -74,3 +74,16 @@ The `delayedby` int is the number of times the execution of the script is delaye
 -	__log__: (bool) log ?
 -	__logfile__: (string) # file to append the log.
 
+### Cross Compile
+
+If you are building on OSX for Linux usage, make sure your Go e prepared to generate binaries for other architectures. To enable it for Linux:
+
+```
+$ cd  $GOROOT/src
+$ GOOS=linux GOARCH=386 ./make.bash
+```
+Then to generate a linux specific binary:
+```
+$ GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -o gocontrol.linux gocontrol.go
+```
+
