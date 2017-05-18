@@ -1,56 +1,58 @@
 package main
 
 import (
-	"os"
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
-	"fmt"
-	"sync"
-	"time"
-	"bytes"
-	"os/exec"
-	"strconv"
 	"math/rand"
-	"encoding/json"
 	"net/http"
 	"net/mail"
 	"net/smtp"
+	"os"
+	"os/exec"
+	"strconv"
+	"sync"
+	"time"
+
 	"github.com/pedromg/goEncoderBase64"
 )
 
+// RequestInfo contains all the required config information
 type RequestInfo struct {
-	Name string
-	Url string
-	Secure bool
-	Interval int
-	StatusCode []int
-	MaxAlerts int
-	Script string
-	DelayedBy int
-	Email bool
-	SmtpHost string
-	SmtpPort int
-	SmtpEmail string
-	SmtpUsername string
-	SmtpPassword string
+	Name         string
+	URL          string
+	Secure       bool
+	Interval     int
+	StatusCode   []int
+	MaxAlerts    int
+	Script       string
+	DelayedBy    int
+	Email        bool
+	SMTPHost     string
+	SMTPPort     int
+	SMTPEmail    string
+	SMTPUsername string
+	SMTPPassword string
 	EmailAddress string
-	Log bool
-	LogFile string
+	Log          bool
+	LogFile      string
 }
 
 var reqinfo []RequestInfo
 
-func json_to_requestinfo(j []byte) (r []RequestInfo, err error) {
+func jsonToRequestinfo(j []byte) (r []RequestInfo, err error) {
 	err = json.Unmarshal(j, &r)
 	return r, err
 }
 
-func GetRequestInfo(f string) (r []RequestInfo, err error) {
-	var the_json []byte
-	the_json, err = ioutil.ReadFile(f)
+func getRequestInfo(f string) (r []RequestInfo, err error) {
+	var theJSON []byte
+	theJSON, err = ioutil.ReadFile(f)
 	if err == nil {
 		log.Print("JSON file loaded. OK")
-		r, err = json_to_requestinfo(the_json)
+		r, err = jsonToRequestinfo(theJSON)
 	}
 	return r, err
 }
@@ -68,12 +70,12 @@ func messageLine(elem RequestInfo, r *http.Response, err error) (m string) {
 	return m
 }
 
-func send_email(elem RequestInfo, from, to, msg string) {
+func senderEmail(elem RequestInfo, from, to, msg string) {
 	f := mail.Address{from, from}
 	t := mail.Address{to, to}
 	// auth
-	auth := smtp.PlainAuth("", elem.SmtpUsername, elem.SmtpPassword, elem.SmtpHost)
-	err := smtp.SendMail(elem.SmtpHost+":"+strconv.Itoa(elem.SmtpPort), auth, f.Address, []string{t.Address}, []byte(msg))
+	auth := smtp.PlainAuth("", elem.SMTPUsername, elem.SMTPPassword, elem.SMTPHost)
+	err := smtp.SendMail(elem.SMTPHost+":"+strconv.Itoa(elem.SMTPPort), auth, f.Address, []string{t.Address}, []byte(msg))
 	if err != nil {
 		log.Print("SEND MAIL Error, ", err)
 	}
@@ -81,13 +83,13 @@ func send_email(elem RequestInfo, from, to, msg string) {
 
 func sendEmail(elem RequestInfo, r *http.Response, err error) (e error) {
 	startTime := time.Now()
-        header := make(map[string]string)
-	header["From"] = elem.SmtpEmail
+	header := make(map[string]string)
+	header["From"] = elem.SMTPEmail
 	header["To"] = elem.EmailAddress
-	the_mesg_id := "<" + strconv.Itoa(rand.Intn(999999999)) + "__" +
+	theMesgID := "<" + strconv.Itoa(rand.Intn(999999999)) + "__" +
 		startTime.Format("2006-01-02T15:04:05.999999999Z07:00") +
-		"==@"+elem.SmtpHost+">" 
-	header["Message-id"] = the_mesg_id
+		"==@" + elem.SMTPHost + ">"
+	header["Message-id"] = theMesgID
 	header["Date"] = startTime.Format("Mon, 02 Jan 2006 15:04:05 +0000")
 	header["Subject"] = "goControl Alert for " + elem.Name
 	header["MIME-Version"] = "1.0"
@@ -101,8 +103,8 @@ func sendEmail(elem RequestInfo, r *http.Response, err error) (e error) {
 	}
 	msg += "\r\n"
 	msg += goEncoderBase64.Base64MimeEncoder(body)
-	go send_email(elem, elem.SmtpEmail, elem.EmailAddress, msg)
-	// always return nil
+	go senderEmail(elem, elem.SMTPEmail, elem.EmailAddress, msg)
+
 	return e
 }
 
@@ -126,15 +128,15 @@ func execScript(elem RequestInfo) (err error) {
 func startWorker(elem RequestInfo, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var url string
-	alert		:= false
-	delayCounter	:= 0
-	maxAlertCounter	:= 0
+	alert := false
+	delayCounter := 0
+	maxAlertCounter := 0
 	if elem.Secure {
-		url = "https://" + elem.Url
+		url = "https://" + elem.URL
 	} else {
-		url = "http://" + elem.Url
+		url = "http://" + elem.URL
 	}
-	log.Print("Started monitoring >> ", elem.Url, " at a ", elem.Interval, "s interval")
+	log.Print("Started monitoring >> ", elem.URL, " at a ", elem.Interval, "s interval")
 
 	for {
 		// request is sent
@@ -153,10 +155,10 @@ func startWorker(elem RequestInfo, wg *sync.WaitGroup) {
 
 		// delay script execution counter.
 		// alerts will be sent if the maxalert is not reached.
-		// maxAlertCounter is incremented or reset. 
+		// maxAlertCounter is incremented or reset.
 		if alert {
-			delayCounter += 1
-			maxAlertCounter += 1
+			delayCounter++
+			maxAlertCounter++
 		} else {
 			maxAlertCounter = 0
 			delayCounter = 0
@@ -186,19 +188,18 @@ func startWorker(elem RequestInfo, wg *sync.WaitGroup) {
 	}
 }
 
-
 func main() {
 	// TODO: json file name via argument
 	// TODO: list of json files, via argument
-	json_file := "./files/gocontrol.json"
+	jsonFile := "./files/gocontrol.json"
 	// get the requests to monitor
 
-	res, err := GetRequestInfo(json_file)
-	if  err != nil {
+	res, err := getRequestInfo(jsonFile)
+	if err != nil {
 		log.Fatal("Fatal error loading the JSON data,", err)
 	}
 	for _, elem := range res {
-		fmt.Printf("URL: %s Script:%s (Secure:%v) \n", elem.Url, elem.Script, elem.Secure)
+		fmt.Printf("URL: %s Script:%s (Secure:%v) \n", elem.URL, elem.Script, elem.Secure)
 	}
 
 	// create go routines for each request
@@ -210,4 +211,3 @@ func main() {
 	wg.Wait()
 
 }
-
