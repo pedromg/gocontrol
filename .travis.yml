@@ -1,0 +1,8 @@
+language: go
+script: go get github.com/pedromg/gocontrol && go test
+notifications:
+  email:
+    recipients:
+      - pedro.mota@gmail.com
+    on_success: never
+    on_failure: always
