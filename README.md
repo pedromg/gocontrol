@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/pedromg/gocontrol.svg?branch=master)](https://travis-ci.org/pedromg/gocontrol)
 gocontrol
 =========
 
